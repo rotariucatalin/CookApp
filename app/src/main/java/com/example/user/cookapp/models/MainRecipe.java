@@ -1,18 +1,20 @@
 package com.example.user.cookapp.models;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by user on 05.03.2018.
  */
 
 public class MainRecipe {
 
-    private String title    = "";
-    private int time       = 0;
+    private String title  = "";
+    private Bitmap background;
 
-    public MainRecipe(String title, int time) {
+    public MainRecipe(String title, Bitmap background) {
 
         this.title      = title;
-        this.time      = time;
+        this.background = background;
     }
 
     public void setTitle(String title) {
@@ -21,8 +23,6 @@ public class MainRecipe {
     public String getTitle() {
         return title;
     }
-    public void setTime(int time) {
-        this.time = time;
-    }
-    public int getTime() { return time; }
+    public void setBackground(Bitmap background) { this.background = background; }
+    public Bitmap getBackground() { return background; }
 }

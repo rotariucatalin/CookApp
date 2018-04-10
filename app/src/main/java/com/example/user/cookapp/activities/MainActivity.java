@@ -1,100 +1,68 @@
 package com.example.user.cookapp.activities;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.user.cookapp.fragments.MainFragment;
+import com.example.user.cookapp.fragments.SaladFragment;
 import com.example.user.cookingapp.R;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import com.example.user.cookapp.adapters.MainRecipeAdapter;
-import de.hdodenhof.circleimageview.CircleImageView;
-import com.example.user.cookapp.models.MainRecipe;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    private MainRecipeAdapter mainRecipeAdapter;
-    private List<MainRecipe> mainRecipes;
-    private MainRecipe mainRecipe;
-    private CircleImageView imageView;
+    private Context context;
+    private Activity activity;
     private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        context = getApplicationContext();
+        activity = this;
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView   = (NavigationView) findViewById(R.id.nav_view);
 
         navigationView.setNavigationItemSelectedListener(this);
 
-        recyclerView        = (RecyclerView)findViewById(R.id.recycleViewMainActivity);
-        imageView           = (CircleImageView)findViewById(R.id.thumbnail);
+        recyclerView = (RecyclerView) findViewById(R.id.recycleView);
 
-        mainRecipes         = new ArrayList<>();
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
-        recyclerView.setLayoutManager(layoutManager);
-        mainRecipeAdapter   = new MainRecipeAdapter(mainRecipes);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PIZAA HOT", 10);
-        mainRecipes.add(mainRecipe);
-        recyclerView.setAdapter(mainRecipeAdapter);
+        MainFragment mainFragment = new MainFragment(context);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.content_main, mainFragment).addToBackStack(null);
+        fragmentTransaction.commit();
     }
 
     @Override
     public void onBackPressed() {
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
+
         }
+
     }
 
     @Override
@@ -127,6 +95,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         if (id == R.id.nav_camera) {
             // Handle the camera action
+
+            SaladFragment saladFragment = new SaladFragment();
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.content_main, saladFragment).addToBackStack("");
+            fragmentTransaction.commit();
+
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
@@ -143,4 +117,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+
 }

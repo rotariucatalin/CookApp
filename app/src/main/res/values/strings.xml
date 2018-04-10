@@ -14,6 +14,7 @@
     <string name="email">Email...</string>
     <string name="password">Password...</string>
     <string name="rememberme">Remember me</string>
+    <string name="title">Title</string>
 
     <string name="login">LOGIN</string>
     <string name="register">REGISTER</string>
@@ -21,4 +22,7 @@
     <string name="loginIcon">Login Icon</string>
 
     <string name="TODO">TODO</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

@@ -37,7 +37,7 @@ public class LoginActivity extends AppCompatActivity {
     private Intent redirectLoginFacebook;
     private Context context;
 
-    public static final String LOGIN_LINK       = "http://192.168.1.104/cook_app/request.php";
+    public static final String LOGIN_LINK       = "http://192.168.105.171/cook_app/request.php";
     public static final String REQUEST_TYPE     = "login";
     public static final String STORE_FACEBOOK   = "facebook_login";
 
@@ -49,9 +49,6 @@ public class LoginActivity extends AppCompatActivity {
 
         /* Check if seesion with FACEBOOK is setted*/
         checkFacebookSession();
-        
-        
-        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET);
 
         loginLayoutFile     = (ConstraintLayout) findViewById(R.id.loginLayoutFile);
         usernameEditText    = (EditText)    findViewById(R.id.usernameText);
