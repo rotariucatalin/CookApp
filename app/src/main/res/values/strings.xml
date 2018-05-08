@@ -25,4 +25,11 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="saladeString">SALADE</string>
+    <string name="fishString">FISH</string>
+    <string name="meatString">MEAT</string>
+    <string name="soupString">SOUP</string>
+    <string name="dessertString">DESSERT</string>
+
 </resources>

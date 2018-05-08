@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 
+import com.example.user.cookapp.interfaces.UtilityInterface;
 import com.facebook.AccessToken;
 
 import org.json.JSONException;
@@ -30,28 +32,43 @@ import javax.net.ssl.HttpsURLConnection;
 
 import com.example.user.cookapp.activities.MainActivity;
 
+import static android.content.Context.MODE_PRIVATE;
+
 /**
  * Created by user on 08.02.2018.
  */
 
 public class HttpRequest extends AsyncTask<String, String, JSONObject> {
 
-    private JSONObject sendJsonInfo     = new JSONObject();
-    private JSONObject resultFromServer = new JSONObject();
-    private String code, message, userEmail, userFirstName, userLastName = "";
-    private boolean facebookLoggedIn = false;
-    private Bundle loginCredentialsBundle = new Bundle();
-    @SuppressLint("StaticFieldLeak")
+    private JSONObject sendJsonInfo         = new JSONObject();
+    private JSONObject resultFromServer     = new JSONObject();
+    private String type                     = "";
+    private String code                     = "";
+    private String message                  = "";
+    private String userEmail                = "";
+    private String userFirstName            = "";
+    private String userLastName             = "";
+    private String userPassword             = "";
+    private boolean rememberMe              = false;
+    private int userID                      = 0;
+    private boolean facebookLoggedIn        = false;
+    private Bundle loginCredentialsBundle   = new Bundle();
     private Context context;
-    @SuppressLint("StaticFieldLeak")
     private ConstraintLayout parentLayout;
     private ProgressDialog progressDialog;
     private Intent loginIntent;
+    public UtilityInterface utilityInterface;
 
     public HttpRequest(Context context, ConstraintLayout parentLayout) {
 
         this.context        = context;
         this.parentLayout   = parentLayout;
+    }
+
+    public HttpRequest(Context context, UtilityInterface utilityInterface) {
+
+        this.context            = context;
+        this.utilityInterface   = utilityInterface;
     }
 
     @Override
@@ -61,8 +78,11 @@ public class HttpRequest extends AsyncTask<String, String, JSONObject> {
 
             switch(strings[1]) {
 
-                case "login"            :   createJsonToSendOnTheServerForLogin(strings);           break;
-                case "facebook_login"   :   createJsonToSendOnTheServerForFacebookLogin(strings);   break;
+                case "login"                :   createJsonToSendOnTheServerForLogin(strings);                       break;
+                case "facebook_login"       :   createJsonToSendOnTheServerForFacebookLogin(strings);               break;
+                case "recipe_list"          :   createJsonToSendOnTheServerForRequestRecipeList(strings);           break;
+                case "request_recipe_info"  :   createJsonToSendOnTheServerForRequestRecipeListSelected(strings);   break;
+                case "insert_like_recipe"   :   createJsonLikeRecipe(strings);                                      break;
             }
 
             /* Create the url where to make the request */
@@ -98,8 +118,10 @@ public class HttpRequest extends AsyncTask<String, String, JSONObject> {
 
             } else {
 
-                resultFromServer    = new JSONObject("{\"code\":\"There is a problem connecting with the server!\",\"user_id\":\"\",\"user_email\":\"\",\"user_first_name\":\"\",\"user_last_name\":\"\"}");
+                resultFromServer    = new JSONObject("{\"code\":\"error\",\"message\":\"There is a problem connecting with the server!\"}");
             }
+
+            connection.disconnect();
 
         } catch (JSONException e) {
             e.printStackTrace();
@@ -125,62 +147,29 @@ public class HttpRequest extends AsyncTask<String, String, JSONObject> {
 
         progressDialog.dismiss();
 
-        /**
-        *   Check if json from server is empty.
-        *   If it is empty there is a problem connectiong with server
-        *   If login was made with facebook there is no posibility to store the facebook account information
-        * */
+         /**
+         *  Check if json from server is empty.
+         * If it is empty there is a problem connectiong with server
+         * If login was made with facebook there is no posibility to store the facebook account information
+         * Switch type from server response.
+         * */
         if (jsonObject.length() != 0) {
 
             try {
-                code                = jsonObject.getString("code");
-                message             = jsonObject.getString("message");
-                userEmail           = jsonObject.getString("user_email");
-                userFirstName       = jsonObject.getString("user_first_name");
-                userLastName        = jsonObject.getString("user_last_name");
-                facebookLoggedIn    = jsonObject.getBoolean("facebook_logged_in");
+                type                = jsonObject.getString("type");
 
-                /**
-                *   If code received from server is error display a snackbar
-                *   If code received is success store credentials in a bundle the redirect to MainActivity
-                */
-                if (code.equals("error")) {
-
-                    Snackbar snackbar = Snackbar.make(parentLayout, message, Snackbar.LENGTH_LONG);
-                    snackbar.show();
-
-                } else {
-
-                    loginCredentialsBundle.putString("user_email", userEmail);
-                    loginCredentialsBundle.putString("user_first_name", userFirstName);
-                    loginCredentialsBundle.putString("user_last_name", userLastName);
-                    loginCredentialsBundle.putBoolean("facebook_logged_in", facebookLoggedIn);
-                    loginIntent = new Intent(context, MainActivity.class);
-                    loginIntent.putExtra("loginCredentialsBundle", loginCredentialsBundle);
-                    context.startActivity(loginIntent);
+                switch(type) {
+                    case "login":                   switchRequestToServerLogin(jsonObject, parentLayout);       break;
+                    case "recipe_list":             utilityInterface.asyncTaskCompleted(jsonObject);            break;
+                    case "recipe_list_selected":    utilityInterface.asyncTaskCompleted(jsonObject);            break;
+                    case "insert_like_recipe":      utilityInterface.asyncTaskCompleted(jsonObject);            break;
                 }
 
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         } else {
-
-            /**
-            *   Store the facebook logged in ( If there was a problem with connection with the server but the user logged with facebook )
-            *   If login was successfully redirect to MainActivity
-            */
-            facebookLoggedIn = AccessToken.getCurrentAccessToken() == null;
-            if(facebookLoggedIn == false) {
-
-                loginIntent = new Intent(context, MainActivity.class);
-                context.startActivity(loginIntent);
-
-            } else {
-
-                message = "There is a problem connectin with the server! Please try again later!";
-                Snackbar snackbar = Snackbar.make(parentLayout, message, Snackbar.LENGTH_LONG);
-                snackbar.show();
-            }
+            switchRequestToServerFacebook();
         }
     }
 
@@ -195,9 +184,10 @@ public class HttpRequest extends AsyncTask<String, String, JSONObject> {
     private void createJsonToSendOnTheServerForLogin(String[] strings){
 
         try {
-            sendJsonInfo.put("type", strings[1]);
-            sendJsonInfo.put("email", strings[2]);
-            sendJsonInfo.put("password", strings[3]);
+            sendJsonInfo.put("type",        strings[1]);
+            sendJsonInfo.put("email",       strings[2]);
+            sendJsonInfo.put("password",    strings[3]);
+            sendJsonInfo.put("remeberMe",   strings[4]);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -210,14 +200,128 @@ public class HttpRequest extends AsyncTask<String, String, JSONObject> {
 
         try {
 
-            sendJsonInfo.put("type", strings[1]);
-            sendJsonInfo.put("idFacebook", strings[2]);
-            sendJsonInfo.put("emailFacebook", strings[3]);
-            sendJsonInfo.put("firstNameFacebook", strings[4]);
-            sendJsonInfo.put("lastNameFacebook", strings[5]);
+            sendJsonInfo.put("type",                strings[1]);
+            sendJsonInfo.put("idFacebook",          strings[2]);
+            sendJsonInfo.put("emailFacebook",       strings[3]);
+            sendJsonInfo.put("firstNameFacebook",   strings[4]);
+            sendJsonInfo.put("lastNameFacebook",    strings[5]);
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Create the json for request recipe list
+     */
+    private void createJsonToSendOnTheServerForRequestRecipeList(String[] strings) {
+
+        try {
+
+            sendJsonInfo.put("type",        strings[1]);
+            sendJsonInfo.put("recipe_type", strings[2]);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Create the json for request recipe list
+     */
+    private void createJsonToSendOnTheServerForRequestRecipeListSelected(String[] strings) {
+
+        try {
+
+            sendJsonInfo.put("type",        strings[1]);
+            sendJsonInfo.put("recipeID",    strings[2]);
+            sendJsonInfo.put("userID",      strings[3]);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Create the json for insert liked recipe
+     */
+    private void createJsonLikeRecipe(String[] strings) {
+
+        try {
+
+            sendJsonInfo.put("type",            strings[1]);
+            sendJsonInfo.put("recipeID",        strings[2]);
+            sendJsonInfo.put("userID",          strings[3]);
+            sendJsonInfo.put("recipe_like",     strings[4]);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void switchRequestToServerLogin(JSONObject jsonObject, ConstraintLayout parentLayout) {
+
+        try {
+
+            code                = jsonObject.getString("code");
+            message             = jsonObject.getString("message");
+
+            /**
+             *   If code received from server is error display a snackbar
+             *   If code received is success store credentials in a bundle the redirect to MainActivity
+             */
+            if (code.equals("error")) {
+
+                Snackbar snackbar = Snackbar.make(parentLayout, message, Snackbar.LENGTH_LONG);
+                snackbar.show();
+
+            } else {
+
+                userID              = jsonObject.getInt("user_id");
+                userEmail           = jsonObject.getString("user_email");
+                userPassword        = jsonObject.getString("user_password");
+                userFirstName       = jsonObject.getString("user_first_name");
+                userLastName        = jsonObject.getString("user_last_name");
+                facebookLoggedIn    = jsonObject.getBoolean("facebook_logged_in");
+                rememberMe          = jsonObject.getBoolean("remember_me");
+
+                loginCredentialsBundle.putInt("userID", userID);
+                loginCredentialsBundle.putString("user_email", userEmail);
+                loginCredentialsBundle.putString("user_password", userPassword);
+                loginCredentialsBundle.putString("user_first_name", userFirstName);
+                loginCredentialsBundle.putString("user_last_name", userLastName);
+                loginCredentialsBundle.putBoolean("facebook_logged_in", facebookLoggedIn);
+                loginCredentialsBundle.putBoolean("remember_me", rememberMe);
+
+                loginIntent = new Intent(context, MainActivity.class);
+                loginIntent.putExtras(loginCredentialsBundle);
+                context.startActivity(loginIntent);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void switchRequestToServerFacebook() {
+
+        /**
+         *   Store the facebook logged in ( If there was a problem with connection with the server but the user logged with facebook )
+         *   If login was successfully redirect to MainActivity
+         */
+        facebookLoggedIn = AccessToken.getCurrentAccessToken() == null;
+        if(facebookLoggedIn == false) {
+
+            loginIntent = new Intent(context, MainActivity.class);
+            context.startActivity(loginIntent);
+
+        } else {
+
+            message = "There is a problem connectin with the server! Please try again later!";
+            Snackbar snackbar = Snackbar.make(parentLayout, message, Snackbar.LENGTH_LONG);
+            snackbar.show();
+        }
+
     }
 }

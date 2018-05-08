@@ -3,39 +3,47 @@ package com.example.user.cookapp.fragments;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import com.example.user.cookapp.adapters.MainRecipeAdapter;
-import com.example.user.cookapp.models.MainRecipe;
+import com.example.user.cookapp.utils.Utils;
 import com.example.user.cookingapp.R;
 
-import java.util.ArrayList;
-import java.util.List;
+import static android.content.Context.MODE_PRIVATE;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-@SuppressLint("ValidFragment")
 public class MainFragment extends Fragment {
 
-    private MainRecipeAdapter mainRecipeAdapter;
-    private List<MainRecipe> mainRecipes;
-    private RecyclerView recyclerView;
-    private MainRecipe mainRecipe;
-    private Context context;
+    private ImageView saladeImageView, fishImageView, meatImageView, soupImageView, desserImageView;
+    private TextView saladeTextView, fishTextView, meatTextView, soupTextView, dessertTextView;
+    private FragmentTransaction fragmentTransaction;
 
-    @SuppressLint("ValidFragment")
-    public MainFragment(Context context) {
-        // Required empty public constructor
-        this.context                = context;
+    public MainFragment() {
+
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -45,33 +53,84 @@ public class MainFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
-        Bitmap fishfoodbackground       = BitmapFactory.decodeResource(getResources(),R.drawable.fishfoodbackground);
-        Bitmap meatfoodbackground       = BitmapFactory.decodeResource(getResources(),R.drawable.meatfoodbackground);
-        Bitmap saladfoodbackground      = BitmapFactory.decodeResource(getResources(),R.drawable.saladfoodbackground);
-        Bitmap soupfoodbackground       = BitmapFactory.decodeResource(getResources(),R.drawable.soupbackgroundimage);
-        Bitmap dessertfoodbackground    = BitmapFactory.decodeResource(getResources(),R.drawable.dessertbackgroundimage);
+        /*
+        *   Set all menu items checked to false
+        * */
+        Utils.getInstance().disableMenuOptionClicked();
 
-        recyclerView = (RecyclerView) view.findViewById(R.id.recycleView);
+        saladeImageView     = (ImageView) view.findViewById(R.id.foodImageBackground1);
+        fishImageView       = (ImageView) view.findViewById(R.id.foodImageBackground2);
+        meatImageView       = (ImageView) view.findViewById(R.id.foodImageBackground3);
+        soupImageView       = (ImageView) view.findViewById(R.id.foodImageBackground4);
+        desserImageView     = (ImageView) view.findViewById(R.id.foodImageBackground5);
 
-        mainRecipes         = new ArrayList<>();
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(context);
-        recyclerView.setLayoutManager(layoutManager);
+        saladeTextView      = (TextView) view.findViewById(R.id.title1);
+        fishTextView        = (TextView) view.findViewById(R.id.title2);
+        meatTextView        = (TextView) view.findViewById(R.id.title3);
+        soupTextView        = (TextView) view.findViewById(R.id.title4);
+        dessertTextView     = (TextView) view.findViewById(R.id.title5);
 
-        mainRecipeAdapter   = new MainRecipeAdapter(mainRecipes);
-        mainRecipe          = new MainRecipe("SALATE", saladfoodbackground);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("PESTE", fishfoodbackground);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("CARNE", meatfoodbackground);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("SUPE", soupfoodbackground);
-        mainRecipes.add(mainRecipe);
-        mainRecipe          = new MainRecipe("DESERT", dessertfoodbackground);
-        mainRecipes.add(mainRecipe);
+        saladeImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSelectedRecipes(1);
+            }
+        });
 
-        recyclerView.setAdapter(mainRecipeAdapter);
+        fishImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSelectedRecipes(2);
+            }
+        });
 
+        meatImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSelectedRecipes(3);
+            }
+        });
+
+        soupImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSelectedRecipes(4);
+            }
+        });
+
+        desserImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                goToSelectedRecipes(5);
+            }
+        });
         return view;
     }
+
+    public void goToSelectedRecipes(int position) {
+
+        Fragment fragment = null;
+
+        switch(position) {
+
+            case 1: fragment = new SaladFragment();     break;
+            case 2: fragment = new FishFragment();      break;
+            case 3: fragment = new MeatFragment();      break;
+            case 4: fragment = new SoupFragment();      break;
+            case 5: fragment = new DessertFragment();   break;
+        }
+
+        fragmentTransaction = getFragmentManager().beginTransaction().replace(R.id.frag_content_frame, fragment);
+        fragmentTransaction.addToBackStack("").commit();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        menu.getItem(0).setVisible(false);
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
 
 }

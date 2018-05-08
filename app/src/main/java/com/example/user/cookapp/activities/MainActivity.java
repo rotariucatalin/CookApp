@@ -1,7 +1,10 @@
 package com.example.user.cookapp.activities;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.FragmentTransaction;
@@ -9,20 +12,26 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.example.user.cookapp.fragments.MainFragment;
-import com.example.user.cookapp.fragments.SaladFragment;
+import com.example.user.cookapp.fragments.MyAccountFragment;
+import com.example.user.cookapp.utils.Utils;
 import com.example.user.cookingapp.R;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     private Context context;
     private Activity activity;
-    private RecyclerView recyclerView;
+    private FragmentTransaction fragmentTransaction;
+    private Bundle longBundle;
+    private Utils utils;
+    private TextView textViewUser;
+    private MainFragment mainFragment = new MainFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,15 +50,38 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         toggle.syncState();
 
         NavigationView navigationView   = (NavigationView) findViewById(R.id.nav_view);
-
         navigationView.setNavigationItemSelectedListener(this);
 
-        recyclerView = (RecyclerView) findViewById(R.id.recycleView);
+        TextView textViewUser = (TextView)navigationView.getHeaderView(0).findViewById(R.id.textViewUser);
 
-        MainFragment mainFragment = new MainFragment(context);
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.content_main, mainFragment).addToBackStack(null);
+        longBundle = getIntent().getExtras();
+
+        utils.getInstance().setBundle(longBundle);
+        utils.getInstance().setNavigationView(navigationView);
+
+        textViewUser.setText(longBundle.getString("user_first_name").concat(" ").concat(longBundle.getString("user_last_name")));
+        SharedPreferences.Editor editor = getSharedPreferences("loginCredentials", MODE_PRIVATE).edit();
+
+        if(longBundle.getBoolean("remember_me") == true) {
+
+            editor.putString("üser_first_name",     longBundle.getString("user_first_name"));
+            editor.putString("user_last_name",      longBundle.getString("user_last_name"));
+            editor.putString("user_email",          longBundle.getString("user_email"));
+            editor.putString("user_password",       longBundle.getString("user_password"));
+            editor.putBoolean("user_remember_me",   longBundle.getBoolean("remember_me"));
+
+        } else {
+
+            editor.clear();
+
+        }
+
+        editor.commit();
+
+        fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.frag_content_frame, mainFragment);
         fragmentTransaction.commit();
+
     }
 
     @Override
@@ -58,9 +90,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if (mainFragment.isVisible()) {
+            //If the main fragment is visibile disable the back button
         } else {
             super.onBackPressed();
-
         }
 
     }
@@ -93,24 +126,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.nav_my_account) {
             // Handle the camera action
 
-            SaladFragment saladFragment = new SaladFragment();
-            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-            fragmentTransaction.replace(R.id.content_main, saladFragment).addToBackStack("");
-            fragmentTransaction.commit();
+            MyAccountFragment myAccountFragment = new MyAccountFragment();
+            fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.frag_content_frame, myAccountFragment);
+            fragmentTransaction.addToBackStack("").commit();
 
-        } else if (id == R.id.nav_gallery) {
+        } else if (id == R.id.nav_my_recipe_list) {
 
-        } else if (id == R.id.nav_slideshow) {
+        } else if (id == R.id.nav_logout) {
 
-        } else if (id == R.id.nav_manage) {
+            for(android.support.v4.app.Fragment fragment:getSupportFragmentManager().getFragments()) {
+                getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+            }
 
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+            Intent redirectToLogin = new Intent(this, LoginActivity.class);
+            redirectToLogin.putExtras(longBundle);
+            startActivity(redirectToLogin);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
